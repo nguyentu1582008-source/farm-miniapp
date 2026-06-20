@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 // ============================================================
 // CONFIG — đổi URL này thành IP/domain server của bạn
 // ============================================================
-const API_BASE = "https://163.223.9.139:3000/api";
+const API_BASE = "https://cyclist-stunning-quail.ngrok-free.app/api";
 // Nếu chưa có HTTPS, dùng: const API_BASE = "http://163.223.9.139:3000/api";
 
 // ============================================================
