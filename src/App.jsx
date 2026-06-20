@@ -562,7 +562,7 @@ function WalletScreen({ user, showToast, onRefresh }) {
           </div>
           <label style={S.label}>Số Gem muốn rút</label>
           <input style={S.input} type="number" placeholder="Tối thiểu 100 gem" value={form.gemAmount} onChange={e => setForm({ ...form, gemAmount: e.target.value })} />
-          {form.gemAmount && <div style={{ fontSize: 12, color: "#2e7d32", marginTop: 4 }}>= {(Number(form.gemAmount) * 1000).toLocaleString()} VNĐ</div>}
+          {form.gemAmount && <div style={{ fontSize: 12, color: "#2e7d32", marginTop: 4 }}>= {(Number(form.gemAmount) * 500).toLocaleString()} VNĐ</div>}
           <label style={S.label}>Phương thức</label>
           <select style={S.input} value={form.method} onChange={e => setForm({ ...form, method: e.target.value })}>
             <option value="bank">Ngân hàng</option>
