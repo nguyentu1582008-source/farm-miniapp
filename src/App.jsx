@@ -552,14 +552,14 @@ function SectionTitle({ children }) {
 }
 
 const S = {
-  app: { minHeight: "100vh", background: "#f0ebe0", fontFamily: "'Segoe UI',sans-serif", maxWidth: 430, margin: "0 auto", paddingBottom: 70 },
+  app: { minHeight: "100vh", background: "#f0ebe0", fontFamily: "'Segoe UI',sans-serif",  margin: "0 auto", paddingBottom: 70 },
   loading: { minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 12, background: "#f0ebe0" },
   header: { background: "linear-gradient(135deg,#2e7d32,#66bb6a)", padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 3px 10px rgba(0,0,0,0.2)" },
   headerTitle: { color: "#fff", fontSize: 18, fontWeight: 800 },
   balances: { display: "flex", gap: 6 },
   bal: { background: "rgba(255,255,255,0.2)", color: "#fff", padding: "4px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700 },
   main: { padding: "12px 12px 0" },
-  nav: { position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 430, display: "flex", background: "#fff", borderTop: "1px solid #e0e0e0", boxShadow: "0 -2px 10px rgba(0,0,0,0.1)" },
+  nav: { position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%",  display: "flex", background: "#fff", borderTop: "1px solid #e0e0e0", boxShadow: "0 -2px 10px rgba(0,0,0,0.1)" },
   navBtn: { flex: 1, padding: "8px 0", border: "none", background: "transparent", cursor: "pointer", color: "#9e9e9e", fontSize: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 },
   navActive: { color: "#2e7d32" },
   secTitle: { fontSize: 11, fontWeight: 800, color: "#9e9e9e", textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 10, marginTop: 16 },
