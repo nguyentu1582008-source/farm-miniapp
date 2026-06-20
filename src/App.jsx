@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 
-const API_BASE = "https://acquire-values-measured-telecharger.trycloudflare.com/api";
+const API_BASE = "https://cyclist-stunning-quail.ngrok-free.dev/api";
 const tg = typeof window !== "undefined" && window.Telegram?.WebApp;
 
 function getInitData() {
@@ -552,8 +552,8 @@ function SectionTitle({ children }) {
 }
 
 const S = {
-  app: { minHeight: "100vh", width: "100%", background: "url('/bg.png') center center / cover no-repeat fixed", backgroundSize: "cover", fontFamily: "'Segoe UI',sans-serif", paddingBottom: 70 },
-  loading: { minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 12, background: "url('/bg.png') center center / cover no-repeat fixed" },
+  app: { minHeight: "100vh", background: "#f0ebe0", fontFamily: "'Segoe UI',sans-serif", maxWidth: 430, margin: "0 auto", paddingBottom: 70 },
+  loading: { minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 12, background: "#f0ebe0" },
   header: { background: "linear-gradient(135deg,#2e7d32,#66bb6a)", padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 3px 10px rgba(0,0,0,0.2)" },
   headerTitle: { color: "#fff", fontSize: 18, fontWeight: 800 },
   balances: { display: "flex", gap: 6 },
