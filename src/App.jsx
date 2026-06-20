@@ -330,7 +330,7 @@ function LoadingScreen() {
 const styles = {
   app: {
     minHeight: "100vh",
-    background: "#f5f0e8",
+    background: "url('https://cyclist-stunning-quail.ngrok-free.dev/static/images/bg.png') center top / cover fixed",
     fontFamily: "'Segoe UI', sans-serif",
     maxWidth: 430,
     margin: "0 auto",
