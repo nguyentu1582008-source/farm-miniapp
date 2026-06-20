@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 
-const API_BASE = "https://acquire-values-measured-telecharger.trycloudflare.com/api";
+const API_BASE = "https://combinations-production-reflects-brandon.trycloudflare.com/api";
 const tg = typeof window !== "undefined" && window.Telegram?.WebApp;
 
 function getInitData() {
