@@ -373,16 +373,23 @@ function FarmScreen({ farm, showToast, onRefresh }) {
               <div style={S.animalEmoji}>{cfg.emoji}</div>
               <div style={S.animalName}>{cfg.name}</div>
               <div style={S.animalLv}>Lv.{a.level}</div>
-              {a.isHungry
-                ? <div style={S.badgeHungry}>😩 Đói!</div>
-                : <div style={S.badgeOk}>{pInfo?.emoji || "📦"} +{pending}</div>
-              }
-              {a.isHungry
-                ? <button style={S.btnOrange} onClick={() => doFeed(a.id)} disabled={!!busy}>{busy === a.id+"_f" ? "..." : "🌾 Cho ăn"}</button>
-                : pending > 0
-                  ? <button style={S.btnGreen} onClick={() => doCollectWithAds([a.id])} disabled={!!busy}>{busy === "collecting" ? "..." : "📺 Thu"}</button>
-                  : <div style={{ fontSize: 10, color: "#aaa", textAlign: "center" }}>Đang sản xuất...</div>
-              }
+              {a.isRetired
+  ? <div style={{ background:"#f5f5f5",color:"#999",borderRadius:10,padding:"2px 8px",fontSize:10,fontWeight:700,marginBottom:6,display:"inline-block" }}>💤 Nghỉ hưu</div>
+  : a.isHungry
+    ? <div style={S.badgeHungry}>😩 Đói!</div>
+    : <div style={S.badgeOk}>{pInfo?.emoji || "📦"} +{pending}</div>
+}
+<div style={{ width:"100%",background:"#e0e0e0",borderRadius:10,height:4,marginBottom:6,overflow:"hidden" }}>
+  <div style={{ width:`${Math.min(100,(Number(a.totalProduced||0)/Number(a.maxProduction||200))*100)}%`,background:a.isRetired?"#bdbdbd":"#43a047",height:"100%",borderRadius:10 }} />
+</div>
+{a.isRetired
+  ? <div style={{ fontSize:10,color:"#aaa",textAlign:"center" }}>Mua thú mới</div>
+  : a.isHungry
+    ? <button style={S.btnOrange} onClick={() => doFeed(a.id)} disabled={!!busy}>{busy===a.id+"_f"?"...":"🌾 Cho ăn"}</button>
+    : pending > 0
+      ? <button style={S.btnGreen} onClick={() => doCollectWithAds([a.id])} disabled={!!busy}>{busy==="collecting"?"...":"📺 Thu"}</button>
+      : <div style={{ fontSize:10,color:"#aaa",textAlign:"center" }}>Đang sản xuất...</div>
+}
             </div>
           );
         })}
