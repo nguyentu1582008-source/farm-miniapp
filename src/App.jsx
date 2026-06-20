@@ -24,6 +24,7 @@ async function apiFetch(path, options = {}) {
       "Content-Type": "application/json",
       "x-telegram-initdata": getInitData(),
       "ngrok-skip-browser-warning": "true",
+      "x-telegram-id": tg?.initDataUnsafe?.user?.id?.toString() || "123456789",
       ...(options.headers || {}),
     },
   });
