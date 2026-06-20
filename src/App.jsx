@@ -23,6 +23,7 @@ async function apiFetch(path, options = {}) {
     headers: {
       "Content-Type": "application/json",
       "x-telegram-initdata": getInitData(),
+      "ngrok-skip-browser-warning": "true",
       ...(options.headers || {}),
     },
   });
