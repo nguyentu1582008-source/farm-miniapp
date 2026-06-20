@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 const API_BASE = "https://disclose-consultancy-playback-ride.trycloudflare.com/api";
+const HCAPTCHA_SITE_KEY = "db345550-5982-497c-9c26-790afa08c7ea";
 const tg = typeof window !== "undefined" && window.Telegram?.WebApp;
 
 function getInitData() {
@@ -90,6 +91,95 @@ const SHOP_ANIMALS = [
   { code: "dragon",       tier: "legendary", price: 5000000},
 ];
 
+function get_product_emoji(code) {
+  const map = { chicken:"🥚",pig:"🥩",rabbit:"🥕",duck:"🥚",sheep:"🧶",wild_rabbit:"🪶",cow:"🥛",horse:"🌾",goat:"🥛",camel:"🪶",buffalo:"🥛",golden_sheep:"🧶",peacock:"🪶",unicorn:"✨",phoenix:"🔥",dragon:"💎" };
+  return map[code] || "📦";
+}
+function get_product_name(code) {
+  const map = { chicken:"Trứng gà",pig:"Thịt heo",rabbit:"Cà rốt",duck:"Trứng vịt",sheep:"Len cừu",wild_rabbit:"Lông thỏ",cow:"Sữa bò",horse:"Lúa mạch",goat:"Sữa dê",camel:"Lông lạc đà",buffalo:"Sữa trâu",golden_sheep:"Len vàng",peacock:"Lông vũ",unicorn:"Phép thuật",phoenix:"Lửa thần",dragon:"Ngọc rồng" };
+  return map[code] || "Sản phẩm";
+}
+function get_product_type(code) {
+  const map = { chicken:"egg",pig:"pork",rabbit:"carrot",duck:"duck_egg",sheep:"wool",wild_rabbit:"rabbit_fur",cow:"milk",horse:"barley",goat:"goat_milk",camel:"camel_fur",buffalo:"buffalo_milk",golden_sheep:"golden_wool",peacock:"feather",unicorn:"magic",phoenix:"fire",dragon:"dragon_gem" };
+  return map[code];
+}
+
+// Ads Modal
+function AdsModal({ onDone, onClose }) {
+  const [countdown, setCountdown] = useState(15);
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    if (countdown <= 0) { setDone(true); return; }
+    const t = setTimeout(() => setCountdown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [countdown]);
+
+  return (
+    <div style={S.modalOverlay}>
+      <div style={S.modalBox}>
+        <div style={{ fontSize: 13, color: "#888", marginBottom: 8 }}>📺 Quảng cáo</div>
+        <div style={{ background: "#000", borderRadius: 12, height: 160, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", marginBottom: 16, position: "relative" }}>
+          <div style={{ fontSize: 48 }}>📺</div>
+          <div style={{ color: "#fff", fontSize: 12, marginTop: 8 }}>Xem quảng cáo để thu hoạch</div>
+          {!done && (
+            <div style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", color: "#fff", borderRadius: 20, padding: "2px 10px", fontSize: 12 }}>
+              {countdown}s
+            </div>
+          )}
+        </div>
+        {done ? (
+          <button style={{ ...S.btnGreen, borderRadius: 12, padding: "10px 0" }} onClick={onDone}>
+            ✅ Nhận thưởng và thu hoạch!
+          </button>
+        ) : (
+          <button style={{ ...S.btnGreen, borderRadius: 12, padding: "10px 0", background: "#aaa" }} disabled>
+            Chờ {countdown}s...
+          </button>
+        )}
+        <button style={{ marginTop: 8, background: "none", border: "none", color: "#aaa", fontSize: 12, cursor: "pointer" }} onClick={onClose}>Bỏ qua</button>
+      </div>
+    </div>
+  );
+}
+
+// hCaptcha Modal
+function CaptchaModal({ onDone, onClose }) {
+  const ref = useRef(null);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    // Load hCaptcha script
+    if (window.hcaptcha) { setLoaded(true); return; }
+    const script = document.createElement("script");
+    script.src = "https://js.hcaptcha.com/1/api.js";
+    script.async = true;
+    script.onload = () => setLoaded(true);
+    document.head.appendChild(script);
+  }, []);
+
+  useEffect(() => {
+    if (!loaded || !ref.current) return;
+    if (ref.current.childNodes.length > 0) return;
+    window.hcaptcha.render(ref.current, {
+      sitekey: HCAPTCHA_SITE_KEY,
+      callback: (token) => { onDone(token); },
+      "error-callback": () => {},
+    });
+  }, [loaded, onDone]);
+
+  return (
+    <div style={S.modalOverlay}>
+      <div style={S.modalBox}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#333", marginBottom: 12 }}>🤖 Xác minh bạn không phải bot</div>
+        <div ref={ref} style={{ display: "flex", justifyContent: "center" }} />
+        {!loaded && <div style={{ textAlign: "center", color: "#888", fontSize: 12, marginTop: 8 }}>Đang tải...</div>}
+        <button style={{ marginTop: 12, background: "none", border: "none", color: "#aaa", fontSize: 12, cursor: "pointer", width: "100%" }} onClick={onClose}>Hủy</button>
+      </div>
+    </div>
+  );
+}
+
 export default function FarmApp() {
   const [screen, setScreen] = useState("farm");
   const [user, setUser] = useState(null);
@@ -106,18 +196,13 @@ export default function FarmApp() {
   const loadUser = useCallback(async () => {
     try { const d = await apiFetch("/users/me"); setUser(d); } catch (e) {}
   }, []);
-
   const loadFarm = useCallback(async () => {
     try { const d = await apiFetch("/farm"); setFarm(d); } catch (e) {}
   }, []);
-
   const loadProducts = useCallback(async () => {
     try { const d = await apiFetch("/products"); setProducts(d); } catch (e) {}
   }, []);
-
-  const loadAll = useCallback(() => {
-    return Promise.all([loadUser(), loadFarm(), loadProducts()]);
-  }, [loadUser, loadFarm, loadProducts]);
+  const loadAll = useCallback(() => Promise.all([loadUser(), loadFarm(), loadProducts()]), [loadUser, loadFarm, loadProducts]);
 
   useEffect(() => {
     if (tg) { tg.ready(); tg.expand(); }
@@ -179,22 +264,60 @@ export default function FarmApp() {
 
 function FarmScreen({ farm, showToast, onRefresh }) {
   const [busy, setBusy] = useState(null);
+  const [showAds, setShowAds] = useState(false);
+  const [showCaptcha, setShowCaptcha] = useState(false);
+  const [pendingIds, setPendingIds] = useState([]);
+  const [captchaToken, setCaptchaToken] = useState(null);
+  // Track lần thu hoạch trong ngày để yêu cầu captcha
+  const [harvestCount, setHarvestCount] = useState(() => {
+    const saved = localStorage.getItem('harvestCount');
+    const date = localStorage.getItem('harvestDate');
+    const today = new Date().toDateString();
+    if (date !== today) { localStorage.setItem('harvestDate', today); localStorage.setItem('harvestCount', '0'); return 0; }
+    return parseInt(saved || '0');
+  });
+
   if (!farm) return <Empty icon="🌱" text="Đang tải trang trại..." />;
   const { barns = [], animals = [] } = farm;
 
-  const doCollectAll = async () => {
-    if (animals.length === 0) { showToast("Chưa có thú nuôi!", "error"); return; }
-    const ids = animals.filter(a => !a.isHungry && (a.pendingProduction || 0) > 0).map(a => a.id);
-    if (ids.length === 0) { showToast("Chưa có gì để thu hoạch!"); return; }
-    setBusy("all");
+  const doCollectWithAds = (ids) => {
+    setPendingIds(ids);
+    setShowAds(true);
+  };
+
+  const afterAds = () => {
+    setShowAds(false);
+    // Mỗi 5 lần thu hoạch yêu cầu captcha
+    if (harvestCount > 0 && harvestCount % 5 === 0) {
+      setShowCaptcha(true);
+    } else {
+      doCollect(pendingIds, null);
+    }
+  };
+
+  const afterCaptcha = (token) => {
+    setShowCaptcha(false);
+    setCaptchaToken(token);
+    doCollect(pendingIds, token);
+  };
+
+  const doCollect = async (ids, token) => {
+    if (!ids || ids.length === 0) return;
+    setBusy("collecting");
     try {
-      const r = await apiFetch("/farm/collect", { method: "POST", body: JSON.stringify({ userAnimalIds: ids }) });
-      const products = r.productsGained || {};
-      const items = Object.entries(products).map(([k, v]) => `${PRODUCT_INFO[k]?.emoji || "📦"} +${v}`).join(" ");
-      showToast(items ? `Thu hoạch: ${items} 🎉` : "Chưa có gì!");
+      const body = { userAnimalIds: ids };
+      if (token) body.hcaptchaToken = token;
+      const r = await apiFetch("/farm/collect", { method: "POST", body: JSON.stringify(body) });
+      const prods = r.productsGained || {};
+      const items = Object.entries(prods).map(([k, v]) => `${PRODUCT_INFO[k]?.emoji || "📦"} +${v}`).join(" ");
+      showToast(items ? `Thu hoạch: ${items} 🎉` : "Thu hoạch xong!");
+      const newCount = harvestCount + 1;
+      setHarvestCount(newCount);
+      localStorage.setItem('harvestCount', String(newCount));
       onRefresh();
     } catch (e) { showToast(e.message, "error"); }
     setBusy(null);
+    setPendingIds([]);
   };
 
   const doFeed = async (id) => {
@@ -207,35 +330,22 @@ function FarmScreen({ farm, showToast, onRefresh }) {
     setBusy(null);
   };
 
-  const doCollect = async (id) => {
-    setBusy(id + "_c");
-    try {
-      const r = await apiFetch("/farm/collect", { method: "POST", body: JSON.stringify({ userAnimalIds: [id] }) });
-      const products = r.productsGained || {};
-      const items = Object.entries(products).map(([k, v]) => `${PRODUCT_INFO[k]?.emoji || "📦"} +${v}`).join(" ");
-      showToast(items || "Thu hoạch xong!");
-      onRefresh();
-    } catch (e) { showToast(e.message, "error"); }
-    setBusy(null);
-  };
+  const hungryCount = animals.filter(a => a.isHungry).length;
+  const readyCount = animals.filter(a => !a.isHungry && (a.pendingProduction || 0) > 0).length;
+  const allReadyIds = animals.filter(a => !a.isHungry && (a.pendingProduction || 0) > 0).map(a => a.id);
 
   if (animals.length === 0) return (
     <div>
       <Empty icon="🌱" text="Chưa có thú nuôi" sub="Vào Shop để mua thú!" />
-      {barns.length > 0 && (
-        <>
-          <SectionTitle>Chuồng trại</SectionTitle>
-          {barns.map(b => <div key={b.id} style={S.barnRow}><span>🏠 {b.barnType}</span><span style={{ color: "#888", fontSize: 12 }}>{b.slotsUnlocked}/{b.slotsTotal} ô</span></div>)}
-        </>
-      )}
+      {barns.map(b => <div key={b.id} style={S.barnRow}><span>🏠 {b.barnType}</span><span style={{ color: "#888", fontSize: 12 }}>{b.slotsUnlocked}/{b.slotsTotal} ô</span></div>)}
     </div>
   );
 
-  const hungryCount = animals.filter(a => a.isHungry).length;
-  const readyCount = animals.filter(a => !a.isHungry && (a.pendingProduction || 0) > 0).length;
-
   return (
     <div>
+      {showAds && <AdsModal onDone={afterAds} onClose={() => { setShowAds(false); setPendingIds([]); }} />}
+      {showCaptcha && <CaptchaModal onDone={afterCaptcha} onClose={() => { setShowCaptcha(false); setPendingIds([]); }} />}
+
       <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
         <div style={{ flex: 1, background: "rgba(255,255,255,0.85)", borderRadius: 12, padding: "8px 12px", textAlign: "center" }}>
           <div style={{ fontSize: 20 }}>🐾</div>
@@ -246,8 +356,9 @@ function FarmScreen({ farm, showToast, onRefresh }) {
           <div style={{ fontSize: 12, fontWeight: 700, color: hungryCount > 0 ? "#e53935" : "#888" }}>{hungryCount} đói</div>
         </div>
         <div style={{ flex: 2, background: "rgba(255,255,255,0.85)", borderRadius: 12, padding: "8px 12px", textAlign: "center" }}>
-          <button style={{ ...S.btnGreen, padding: "4px 0", fontSize: 12, borderRadius: 8 }} onClick={doCollectAll} disabled={!!busy}>
-            {busy === "all" ? "..." : `⬇ Thu tất cả (${readyCount})`}
+          <button style={{ ...S.btnGreen, padding: "4px 0", fontSize: 12, borderRadius: 8 }}
+            onClick={() => doCollectWithAds(allReadyIds)} disabled={!!busy || readyCount === 0}>
+            {busy === "collecting" ? "..." : `📺 Thu tất cả (${readyCount})`}
           </button>
         </div>
       </div>
@@ -256,8 +367,7 @@ function FarmScreen({ farm, showToast, onRefresh }) {
         {animals.map(a => {
           const cfg = ANIMAL_CONFIG[a.catalogCode] || { emoji: "🐾", bg: ["#f5f5f5","#e0e0e0"], border: "#9e9e9e", name: a.catalogCode };
           const pending = a.pendingProduction || 0;
-          const productType = a.productType;
-          const pInfo = PRODUCT_INFO[productType];
+          const pInfo = PRODUCT_INFO[a.productType];
           return (
             <div key={a.id} style={{ ...S.animalCard, background: `linear-gradient(145deg,${cfg.bg[0]},${cfg.bg[1]})`, borderTop: `3px solid ${cfg.border}`, opacity: a.isHungry ? 0.85 : 1 }}>
               <div style={S.animalEmoji}>{cfg.emoji}</div>
@@ -270,7 +380,7 @@ function FarmScreen({ farm, showToast, onRefresh }) {
               {a.isHungry
                 ? <button style={S.btnOrange} onClick={() => doFeed(a.id)} disabled={!!busy}>{busy === a.id+"_f" ? "..." : "🌾 Cho ăn"}</button>
                 : pending > 0
-                  ? <button style={S.btnGreen} onClick={() => doCollect(a.id)} disabled={!!busy}>{busy === a.id+"_c" ? "..." : "⬇ Thu"}</button>
+                  ? <button style={S.btnGreen} onClick={() => doCollectWithAds([a.id])} disabled={!!busy}>{busy === "collecting" ? "..." : "📺 Thu"}</button>
                   : <div style={{ fontSize: 10, color: "#aaa", textAlign: "center" }}>Đang sản xuất...</div>
               }
             </div>
@@ -291,6 +401,8 @@ function FarmScreen({ farm, showToast, onRefresh }) {
 function ShopScreen({ user, farm, showToast, onRefresh }) {
   const [buying, setBuying] = useState(null);
   const [filter, setFilter] = useState("all");
+  const tiers = ["all", "common", "rare", "epic", "legendary"];
+  const filtered = filter === "all" ? SHOP_ANIMALS : SHOP_ANIMALS.filter(a => a.tier === filter);
 
   const handleBuy = async (animal) => {
     const barns = farm?.barns || [];
@@ -303,44 +415,34 @@ function ShopScreen({ user, farm, showToast, onRefresh }) {
     setBuying(animal.code);
     try {
       await apiFetch("/farm/buy-animal", { method: "POST", body: JSON.stringify({ catalogCode: animal.code, barnId: barn.id, slotIndex: slot }) });
-      const cfg = ANIMAL_CONFIG[animal.code];
-      showToast(`Đã mua ${cfg?.name || animal.code}! 🎉`);
+      showToast(`Đã mua ${ANIMAL_CONFIG[animal.code]?.name || animal.code}! 🎉`);
       onRefresh();
     } catch (e) { showToast(e.message, "error"); }
     setBuying(null);
   };
 
-  const tiers = ["all", "common", "rare", "epic", "legendary"];
-  const filtered = filter === "all" ? SHOP_ANIMALS : SHOP_ANIMALS.filter(a => a.tier === filter);
-
   return (
     <div>
       <SectionTitle>Cửa hàng thú nuôi</SectionTitle>
       {user && <div style={{ fontSize: 13, color: "#555", marginBottom: 8, background: "rgba(255,255,255,0.7)", padding: "6px 10px", borderRadius: 8 }}>🪙 {Number(user.goldBalance).toLocaleString()} xu</div>}
-      
       <div style={{ display: "flex", gap: 4, marginBottom: 12, overflowX: "auto" }}>
         {tiers.map(t => (
           <button key={t} style={{ ...S.filterBtn, ...(filter === t ? S.filterActive : {}) }} onClick={() => setFilter(t)}>
-            {t === "all" ? "Tất cả" : TIER_CONFIG[t]?.label || t}
+            {t === "all" ? "Tất cả" : TIER_CONFIG[t]?.label}
           </button>
         ))}
       </div>
-
       <div style={S.grid2}>
         {filtered.map(a => {
           const cfg = ANIMAL_CONFIG[a.code] || { emoji: "🐾", bg: ["#f5f5f5","#e0e0e0"], border: "#9e9e9e", name: a.code };
           const tier = TIER_CONFIG[a.tier];
-          const pType = Object.entries(ANIMAL_CONFIG).find(([k]) => k === a.code)?.[0];
-          const pInfo = PRODUCT_INFO[require_product_map(a.code)];
           const canAfford = user && Number(user.goldBalance) >= a.price;
           return (
             <div key={a.code} style={{ ...S.animalCard, background: `linear-gradient(145deg,${cfg.bg[0]},${cfg.bg[1]})`, borderTop: `3px solid ${cfg.border}` }}>
               <div style={S.animalEmoji}>{cfg.emoji}</div>
               <div style={S.animalName}>{cfg.name}</div>
               <div style={{ ...S.tierBadge, background: tier.bg, color: tier.color }}>{tier.label}</div>
-              <div style={{ fontSize: 10, color: "#888", margin: "4px 0 8px" }}>
-                {get_product_emoji(a.code)} Sản xuất {get_product_name(a.code)}
-              </div>
+              <div style={{ fontSize: 10, color: "#888", margin: "4px 0 8px" }}>{get_product_emoji(a.code)} {get_product_name(a.code)}</div>
               <button style={{ ...S.btnGreen, opacity: canAfford ? 1 : 0.5 }} onClick={() => handleBuy(a)} disabled={!!buying || !canAfford}>
                 {buying === a.code ? "..." : `🪙 ${a.price.toLocaleString()}`}
               </button>
@@ -351,19 +453,6 @@ function ShopScreen({ user, farm, showToast, onRefresh }) {
       </div>
     </div>
   );
-}
-
-function get_product_emoji(code) {
-  const map = { chicken:"🥚",pig:"🥩",rabbit:"🥕",duck:"🥚",sheep:"🧶",wild_rabbit:"🪶",cow:"🥛",horse:"🌾",goat:"🥛",camel:"🪶",buffalo:"🥛",golden_sheep:"🧶",peacock:"🪶",unicorn:"✨",phoenix:"🔥",dragon:"💎" };
-  return map[code] || "📦";
-}
-function get_product_name(code) {
-  const map = { chicken:"Trứng gà",pig:"Thịt heo",rabbit:"Cà rốt",duck:"Trứng vịt",sheep:"Len cừu",wild_rabbit:"Lông thỏ",cow:"Sữa bò",horse:"Lúa mạch",goat:"Sữa dê",camel:"Lông lạc đà",buffalo:"Sữa trâu",golden_sheep:"Len vàng",peacock:"Lông vũ",unicorn:"Phép thuật",phoenix:"Lửa thần",dragon:"Ngọc rồng" };
-  return map[code] || "Sản phẩm";
-}
-function require_product_map(code) {
-  const map = { chicken:"egg",pig:"pork",rabbit:"carrot",duck:"duck_egg",sheep:"wool",wild_rabbit:"rabbit_fur",cow:"milk",horse:"barley",goat:"goat_milk",camel:"camel_fur",buffalo:"buffalo_milk",golden_sheep:"golden_wool",peacock:"feather",unicorn:"magic",phoenix:"fire",dragon:"dragon_gem" };
-  return map[code];
 }
 
 function ProductsScreen({ products, user, showToast, onRefresh }) {
@@ -397,53 +486,37 @@ function ProductsScreen({ products, user, showToast, onRefresh }) {
   return (
     <div>
       <SectionTitle>Kho sản phẩm</SectionTitle>
-      {user && <div style={{ fontSize: 13, color: "#555", marginBottom: 10, background: "rgba(255,255,255,0.7)", padding: "6px 10px", borderRadius: 8 }}>💎 Gem hiện có: {Number(user.gemBalance).toLocaleString()}</div>}
-      
+      {user && <div style={{ fontSize: 13, color: "#555", marginBottom: 10, background: "rgba(255,255,255,0.7)", padding: "6px 10px", borderRadius: 8 }}>💎 Gem: {Number(user.gemBalance).toLocaleString()}</div>}
       {products.map(p => {
         const info = PRODUCT_INFO[p.productType] || { emoji: "📦", name: p.productType, needed: 100 };
         const amount = Number(p.amount);
         const canExchange = amount >= info.needed;
         const gemsAvailable = Math.floor(amount / info.needed);
         const progress = Math.min(100, (amount / info.needed) * 100);
-
         return (
           <div key={p.productType} style={{ ...S.productCard, opacity: canExchange ? 1 : 0.85 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ fontSize: 36 }}>{info.emoji}</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#333" }}>{info.name}</div>
-                <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>
-                  Có: <b style={{ color: "#333" }}>{amount.toLocaleString()}</b> / Cần: {info.needed} → 1 💎
-                </div>
+                <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>Có: <b style={{ color: "#333" }}>{amount.toLocaleString()}</b> / Cần: {info.needed} → 1 💎</div>
                 <div style={{ marginTop: 6, background: "#e0e0e0", borderRadius: 10, height: 6, overflow: "hidden" }}>
-                  <div style={{ width: `${progress}%`, background: canExchange ? "#43a047" : "#1976d2", height: "100%", borderRadius: 10, transition: "width 0.3s" }} />
+                  <div style={{ width: `${progress}%`, background: canExchange ? "#43a047" : "#1976d2", height: "100%", borderRadius: 10 }} />
                 </div>
               </div>
-              <div style={{ textAlign: "right" }}>
+              <div>
                 {canExchange ? (
                   <button style={{ ...S.btnGreen, padding: "6px 12px", width: "auto", borderRadius: 10, fontSize: 12 }} onClick={() => doExchange(p.productType, info.needed * gemsAvailable)} disabled={!!exchanging}>
                     {exchanging === p.productType ? "..." : `Đổi ${gemsAvailable} 💎`}
                   </button>
                 ) : (
-                  <div style={{ fontSize: 11, color: "#888", textAlign: "center" }}>
-                    Còn thiếu<br /><b>{info.needed - amount}</b>
-                  </div>
+                  <div style={{ fontSize: 11, color: "#888", textAlign: "center" }}>Còn thiếu<br /><b>{info.needed - amount}</b></div>
                 )}
               </div>
             </div>
           </div>
         );
       })}
-
-      <div style={{ background: "rgba(255,255,255,0.8)", borderRadius: 14, padding: 12, marginTop: 12 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: "#555", marginBottom: 8 }}>📋 Tỷ lệ đổi tất cả sản phẩm</div>
-        {Object.entries(PRODUCT_INFO).map(([key, info]) => (
-          <div key={key} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", borderBottom: "0.5px solid #f0f0f0", fontSize: 11, color: "#666" }}>
-            <span>{info.emoji} {info.name}</span>
-            <span style={{ color: "#6a1b9a", fontWeight: 600 }}>{info.needed} → 1 💎</span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
@@ -453,19 +526,17 @@ function ReferralScreen({ user, showToast, onRefresh }) {
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(null);
 
-  const load = async () => {
-    try { const d = await apiFetch("/referral/me"); setData(d); } catch (e) {}
-    setLoading(false);
-  };
-
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    apiFetch("/referral/me").then(setData).catch(() => {}).finally(() => setLoading(false));
+  }, []);
 
   const doClaim = async (rewardId) => {
     setClaiming(rewardId);
     try {
       await apiFetch(`/referral/claim/${rewardId}`, { method: "POST" });
       showToast("Đã nhận thưởng! 🎁");
-      load(); onRefresh();
+      apiFetch("/referral/me").then(setData).catch(() => {});
+      onRefresh();
     } catch (e) { showToast(e.message, "error"); }
     setClaiming(null);
   };
@@ -477,18 +548,8 @@ function ReferralScreen({ user, showToast, onRefresh }) {
   };
 
   if (loading) return <Empty icon="👥" text="Đang tải..." />;
-
   const friends = data?.referredUsers || [];
-  const rewards = data?.rewards || [];
-  const pendingRewards = rewards.filter(r => !r.claimedAt);
-  const totalEarned = data?.totalEarnedGold || "0";
-
-  const MILESTONE_INFO = {
-    joined:   { label: "Bạn bè tham gia",  reward: "300,000 xu", icon: "👋" },
-    level_10: { label: "Bạn đạt level 10", reward: "500,000 xu", icon: "⭐" },
-    level_20: { label: "Bạn đạt level 20", reward: "1,200,000 xu", icon: "🌟" },
-    level_30: { label: "Bạn đạt level 30", reward: "3,600,000 xu", icon: "💫" },
-  };
+  const rewards = (data?.rewards || []).filter(r => !r.claimedAt);
 
   return (
     <div>
@@ -496,61 +557,34 @@ function ReferralScreen({ user, showToast, onRefresh }) {
         <div style={{ fontSize: 32, marginBottom: 6 }}>👥</div>
         <div style={{ color: "#fff", fontWeight: 800, fontSize: 16, marginBottom: 4 }}>Mời bạn bè kiếm xu!</div>
         <div style={{ color: "rgba(255,255,255,0.85)", fontSize: 12, marginBottom: 12 }}>Nhận thưởng khi bạn bè tham gia và lên level</div>
-        <div style={{ background: "rgba(255,255,255,0.2)", borderRadius: 10, padding: "8px 16px", display: "inline-block", marginBottom: 12 }}>
+        <div style={{ background: "rgba(255,255,255,0.2)", borderRadius: 10, padding: "6px 16px", display: "inline-block", marginBottom: 10 }}>
           <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 11 }}>Mã mời</div>
-          <div style={{ color: "#FFD700", fontSize: 20, fontWeight: 800, letterSpacing: 2 }}>{user?.refCode || "..."}</div>
+          <div style={{ color: "#FFD700", fontSize: 18, fontWeight: 800 }}>{user?.refCode || "..."}</div>
         </div>
         <br />
-        <button style={{ ...S.btnGreen, background: "#FFD700", color: "#4A3500", borderRadius: 20, padding: "8px 20px", width: "auto", fontSize: 13 }} onClick={copyLink}>
-          📋 Copy link mời
-        </button>
+        <button style={{ ...S.btnGreen, background: "#FFD700", color: "#4A3500", borderRadius: 20, padding: "8px 20px", width: "auto", fontSize: 13 }} onClick={copyLink}>📋 Copy link mời</button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginTop: 12, marginBottom: 4 }}>
-        <div style={{ ...S.statCard, background: "rgba(255,255,255,0.85)" }}>
-          <div style={{ fontSize: 22, fontWeight: 800, color: "#2e7d32" }}>{friends.length}</div>
-          <div style={{ fontSize: 11, color: "#555" }}>Bạn bè</div>
-        </div>
-        <div style={{ ...S.statCard, background: "rgba(255,255,255,0.85)" }}>
-          <div style={{ fontSize: 22, fontWeight: 800, color: "#b8860b" }}>{pendingRewards.length}</div>
-          <div style={{ fontSize: 11, color: "#555" }}>Chờ nhận</div>
-        </div>
-        <div style={{ ...S.statCard, background: "rgba(255,255,255,0.85)" }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: "#6a1b9a" }}>{(Number(totalEarned)/1000).toFixed(0)}K</div>
-          <div style={{ fontSize: 11, color: "#555" }}>Đã kiếm</div>
-        </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginTop: 10, marginBottom: 4 }}>
+        <div style={{ ...S.statCard, background: "rgba(255,255,255,0.85)" }}><div style={{ fontSize: 22, fontWeight: 800, color: "#2e7d32" }}>{friends.length}</div><div style={{ fontSize: 11, color: "#555" }}>Bạn bè</div></div>
+        <div style={{ ...S.statCard, background: "rgba(255,255,255,0.85)" }}><div style={{ fontSize: 22, fontWeight: 800, color: "#b8860b" }}>{rewards.length}</div><div style={{ fontSize: 11, color: "#555" }}>Chờ nhận</div></div>
+        <div style={{ ...S.statCard, background: "rgba(255,255,255,0.85)" }}><div style={{ fontSize: 14, fontWeight: 800, color: "#6a1b9a" }}>{(Number(data?.totalEarnedGold || 0)/1000).toFixed(0)}K</div><div style={{ fontSize: 11, color: "#555" }}>Đã kiếm</div></div>
       </div>
 
-      {pendingRewards.length > 0 && (
+      {rewards.length > 0 && (
         <>
           <SectionTitle>Thưởng chờ nhận</SectionTitle>
-          {pendingRewards.map(r => (
+          {rewards.map(r => (
             <div key={r.id} style={S.taskCard}>
               <div style={S.taskLeft}>
-                <div style={S.taskIcon}>{MILESTONE_INFO[r.milestone]?.icon || "🎁"}</div>
-                <div>
-                  <div style={S.taskTitle}>{MILESTONE_INFO[r.milestone]?.label || r.milestone}</div>
-                  <div style={S.taskSub}>🪙 {Number(r.rewardGold).toLocaleString()} xu</div>
-                </div>
+                <div style={S.taskIcon}>🎁</div>
+                <div><div style={S.taskTitle}>{r.milestone}</div><div style={S.taskSub}>🪙 {Number(r.rewardGold).toLocaleString()} xu</div></div>
               </div>
-              <button style={S.btnSmallGreen} onClick={() => doClaim(r.id)} disabled={!!claiming}>
-                {claiming === r.id ? "..." : "Nhận"}
-              </button>
+              <button style={S.btnSmallGreen} onClick={() => doClaim(r.id)} disabled={!!claiming}>{claiming === r.id ? "..." : "Nhận"}</button>
             </div>
           ))}
         </>
       )}
-
-      <SectionTitle>Mốc thưởng</SectionTitle>
-      {Object.entries(MILESTONE_INFO).map(([key, info]) => (
-        <div key={key} style={{ background: "rgba(255,255,255,0.85)", borderRadius: 12, padding: "10px 14px", marginBottom: 6, display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ fontSize: 24 }}>{info.icon}</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#333" }}>{info.label}</div>
-            <div style={{ fontSize: 11, color: "#888" }}>🪙 {info.reward}</div>
-          </div>
-        </div>
-      ))}
 
       {friends.length > 0 && (
         <>
@@ -559,16 +593,14 @@ function ReferralScreen({ user, showToast, onRefresh }) {
             <div key={f.id} style={S.taskCard}>
               <div style={S.taskLeft}>
                 <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#e8f5e9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>👤</div>
-                <div>
-                  <div style={S.taskTitle}>{f.fullName || f.username || "Nông dân"}</div>
-                  <div style={S.taskSub}>Level {f.level}</div>
-                </div>
+                <div><div style={S.taskTitle}>{f.fullName || f.username || "Nông dân"}</div><div style={S.taskSub}>Level {f.level}</div></div>
               </div>
               <div style={{ background: "#e8f5e9", color: "#2e7d32", borderRadius: 8, padding: "4px 10px", fontSize: 12, fontWeight: 700 }}>Lv.{f.level}</div>
             </div>
           ))}
         </>
       )}
+      {friends.length === 0 && <Empty icon="👥" text="Chưa có bạn bè" sub="Chia sẻ link để nhận thưởng!" />}
     </div>
   );
 }
@@ -579,9 +611,7 @@ function WalletScreen({ user, showToast, onRefresh }) {
   const [form, setForm] = useState({ gemAmount: "", method: "bank", accountHolder: "", accountNumber: "", bankName: "" });
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    apiFetch("/wallet/transactions").then(setTxs).catch(() => {});
-  }, []);
+  useEffect(() => { apiFetch("/wallet/transactions").then(setTxs).catch(() => {}); }, []);
 
   const doWithdraw = async () => {
     setSubmitting(true);
@@ -596,12 +626,10 @@ function WalletScreen({ user, showToast, onRefresh }) {
   if (!user) return null;
 
   const REASON_LABEL = {
-    collect_product: "Thu hoạch", feed_cost: "Cho thú ăn",
-    buy_animal: "Mua thú", upgrade_barn: "Nâng cấp chuồng",
-    withdraw: "Rút tiền", product_exchange: "Đổi sản phẩm → gem",
-    lottery_ticket: "Mua vé số", lottery_win: "Trúng vé số",
-    admin_adjust: "Admin điều chỉnh", referral_reward: "Thưởng referral",
-    collect_gem: "Thu gem từ legendary",
+    collect_product: "Thu hoạch", feed_cost: "Cho thú ăn", buy_animal: "Mua thú",
+    upgrade_barn: "Nâng cấp chuồng", withdraw: "Rút tiền", product_exchange: "Đổi sản phẩm → gem",
+    lottery_ticket: "Mua vé số", lottery_win: "Trúng vé số", admin_adjust: "Admin điều chỉnh",
+    referral_reward: "Thưởng referral", collect_gem: "Thu gem từ legendary",
   };
 
   return (
@@ -628,10 +656,7 @@ function WalletScreen({ user, showToast, onRefresh }) {
         txs.length === 0 ? <Empty icon="📊" text="Chưa có giao dịch" /> :
         txs.slice(0, 30).map(tx => (
           <div key={tx.id} style={S.txRow}>
-            <div>
-              <div style={S.txReason}>{REASON_LABEL[tx.reason] || tx.reason}</div>
-              <div style={S.txDate}>{new Date(tx.createdAt).toLocaleDateString("vi-VN")}</div>
-            </div>
+            <div><div style={S.txReason}>{REASON_LABEL[tx.reason] || tx.reason}</div><div style={S.txDate}>{new Date(tx.createdAt).toLocaleDateString("vi-VN")}</div></div>
             <div style={{ ...S.txAmt, color: Number(tx.amount) >= 0 ? "#43a047" : "#e53935" }}>
               {Number(tx.amount) >= 0 ? "+" : ""}{Number(tx.amount).toLocaleString()} {tx.currency === "gold" ? "🪙" : "💎"}
             </div>
@@ -642,7 +667,7 @@ function WalletScreen({ user, showToast, onRefresh }) {
       {tab === "withdraw" && (
         <div style={S.formCard}>
           <div style={S.formTitle}>Rút tiền thật</div>
-          <div style={S.formNote}>1 Gem = 500 VNĐ • Tối thiểu 20 Gem</div>
+          <div style={S.formNote}>1 Gem = 500 VNĐ • Tối thiểu 20 Gem • 1 lần/ngày</div>
           <div style={{ background: "#e8f5e9", borderRadius: 10, padding: "8px 12px", marginBottom: 14, fontSize: 13, color: "#2e7d32", fontWeight: 600 }}>
             💎 Gem hiện có: {Number(user.gemBalance).toLocaleString()}
           </div>
@@ -658,12 +683,10 @@ function WalletScreen({ user, showToast, onRefresh }) {
           <input style={S.input} placeholder="NGUYEN VAN A" value={form.accountHolder} onChange={e => setForm({ ...form, accountHolder: e.target.value })} />
           <label style={S.label}>Số tài khoản / SĐT ví</label>
           <input style={S.input} placeholder="0123456789" value={form.accountNumber} onChange={e => setForm({ ...form, accountNumber: e.target.value })} />
-          {form.method === "bank" && (
-            <>
-              <label style={S.label}>Tên ngân hàng</label>
-              <input style={S.input} placeholder="Vietcombank, MB Bank..." value={form.bankName} onChange={e => setForm({ ...form, bankName: e.target.value })} />
-            </>
-          )}
+          {form.method === "bank" && <>
+            <label style={S.label}>Tên ngân hàng</label>
+            <input style={S.input} placeholder="Vietcombank, MB Bank..." value={form.bankName} onChange={e => setForm({ ...form, bankName: e.target.value })} />
+          </>}
           <button style={{ ...S.btnGreen, marginTop: 16, padding: "12px 0", borderRadius: 12, fontSize: 14 }} onClick={doWithdraw} disabled={submitting}>
             {submitting ? "Đang gửi..." : "💸 Gửi yêu cầu rút tiền"}
           </button>
@@ -674,15 +697,8 @@ function WalletScreen({ user, showToast, onRefresh }) {
 }
 
 function Empty({ icon, text, sub }) {
-  return (
-    <div style={S.empty}>
-      <div style={{ fontSize: 48, marginBottom: 8 }}>{icon}</div>
-      <div style={{ color: "#555", fontWeight: 600 }}>{text}</div>
-      {sub && <div style={{ color: "#999", fontSize: 12, marginTop: 4 }}>{sub}</div>}
-    </div>
-  );
+  return <div style={S.empty}><div style={{ fontSize: 48, marginBottom: 8 }}>{icon}</div><div style={{ color: "#555", fontWeight: 600 }}>{text}</div>{sub && <div style={{ color: "#999", fontSize: 12, marginTop: 4 }}>{sub}</div>}</div>;
 }
-
 function SectionTitle({ children }) {
   return <div style={S.secTitle}>{children}</div>;
 }
@@ -695,7 +711,7 @@ const S = {
   balances: { display: "flex", gap: 6 },
   bal: { background: "rgba(255,255,255,0.2)", color: "#fff", padding: "4px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700 },
   main: { padding: "12px 12px 0" },
-  nav: { position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 430, display: "flex", background: "rgba(0,0,0,0.8)", backdropFilter: "blur(10px)", borderTop: "1px solid rgba(255,255,255,0.1)" },
+  nav: { position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, display: "flex", background: "rgba(0,0,0,0.8)", backdropFilter: "blur(10px)", borderTop: "1px solid rgba(255,255,255,0.1)" },
   navBtn: { flex: 1, padding: "8px 0", border: "none", background: "transparent", cursor: "pointer", color: "rgba(255,255,255,0.5)", fontSize: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 },
   navActive: { color: "#FFD700" },
   secTitle: { fontSize: 11, fontWeight: 800, color: "#444", textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 8, marginTop: 14, background: "rgba(255,255,255,0.7)", padding: "3px 8px", borderRadius: 6, display: "inline-block" },
@@ -738,4 +754,6 @@ const S = {
   btnSmallGreen: { border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", background: "#43a047", color: "#fff" },
   toast: { position: "fixed", bottom: 80, left: "50%", transform: "translateX(-50%)", color: "#fff", padding: "10px 22px", borderRadius: 22, fontSize: 14, fontWeight: 700, boxShadow: "0 4px 16px rgba(0,0,0,0.3)", zIndex: 999, whiteSpace: "nowrap" },
   empty: { textAlign: "center", padding: "30px 20px" },
+  modalOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 },
+  modalBox: { background: "#fff", borderRadius: 20, padding: 20, width: "100%", maxWidth: 340, boxShadow: "0 10px 40px rgba(0,0,0,0.3)" },
 };
