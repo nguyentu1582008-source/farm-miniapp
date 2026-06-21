@@ -28,22 +28,22 @@ async function apiFetch(path, options = {}) {
 }
 
 const ANIMAL_CONFIG = {
-  chicken:      { emoji: "🐔", bg: ["#fff9e6","#ffe082"], border: "#ffb300", name: "Gà" },
-  pig:          { emoji: "🐷", bg: ["#fce4ec","#f48fb1"], border: "#e91e63", name: "Heo" },
-  rabbit:       { emoji: "🐰", bg: ["#f3e5f5","#ce93d8"], border: "#9c27b0", name: "Thỏ" },
-  duck:         { emoji: "🦆", bg: ["#e3f2fd","#90caf9"], border: "#1976d2", name: "Vịt" },
-  sheep:        { emoji: "🐑", bg: ["#e8f5e9","#a5d6a7"], border: "#388e3c", name: "Cừu" },
-  wild_rabbit:  { emoji: "🐇", bg: ["#fff3e0","#ffcc80"], border: "#ef6c00", name: "Thỏ rừng" },
-  cow:          { emoji: "🐄", bg: ["#e8f5e9","#a5d6a7"], border: "#2e7d32", name: "Bò" },
-  horse:        { emoji: "🐴", bg: ["#efebe9","#bcaaa4"], border: "#5d4037", name: "Ngựa" },
-  goat:         { emoji: "🐐", bg: ["#f1f8e9","#c5e1a5"], border: "#558b2f", name: "Dê" },
-  camel:        { emoji: "🦙", bg: ["#fff8e1","#ffe082"], border: "#f9a825", name: "Lạc đà" },
-  buffalo:      { emoji: "🐃", bg: ["#e8eaf6","#9fa8da"], border: "#3949ab", name: "Trâu" },
-  golden_sheep: { emoji: "🐑", bg: ["#fff8e1","#ffe082"], border: "#f57f17", name: "Cừu vàng" },
-  peacock:      { emoji: "🦚", bg: ["#e0f2f1","#80cbc4"], border: "#00695c", name: "Công" },
-  unicorn:      { emoji: "🦄", bg: ["#f3e5f5","#ce93d8"], border: "#7b1fa2", name: "Kỳ lân" },
-  phoenix:      { emoji: "🦅", bg: ["#fbe9e7","#ff8a65"], border: "#d84315", name: "Phượng hoàng" },
-  dragon:       { emoji: "🐉", bg: ["#e8eaf6","#9fa8da"], border: "#1a237e", name: "Rồng" },
+  chicken:      { emoji: "🐔", bg: ["#fff9e6","#ffe082"], border: "#ffb300", name: "Gà",           desc: "Đẻ trứng vàng", rate: "3 🥚/5ph • max 200" },
+  pig:          { emoji: "🐷", bg: ["#fce4ec","#f48fb1"], border: "#e91e63", name: "Heo",          desc: "Cho thịt heo",  rate: "5 🥩/5ph • max 200" },
+  rabbit:       { emoji: "🐰", bg: ["#f3e5f5","#ce93d8"], border: "#9c27b0", name: "Thỏ",          desc: "Trồng cà rốt",  rate: "4 🥕/5ph • max 200" },
+  duck:         { emoji: "🦆", bg: ["#e3f2fd","#90caf9"], border: "#1976d2", name: "Vịt",          desc: "Trứng vịt béo", rate: "4 🥚/5ph • max 200" },
+  sheep:        { emoji: "🐑", bg: ["#e8f5e9","#a5d6a7"], border: "#388e3c", name: "Cừu",          desc: "Len mềm mịn",   rate: "4 🧶/5ph • max 200" },
+  wild_rabbit:  { emoji: "🐇", bg: ["#fff3e0","#ffcc80"], border: "#ef6c00", name: "Thỏ rừng",     desc: "Lông quý hiếm", rate: "5 🪶/5ph • max 200" },
+  cow:          { emoji: "🐄", bg: ["#e8f5e9","#a5d6a7"], border: "#2e7d32", name: "Bò",           desc: "Sữa bò tươi",   rate: "8 🥛/5ph • max 150" },
+  horse:        { emoji: "🐴", bg: ["#efebe9","#bcaaa4"], border: "#5d4037", name: "Ngựa",         desc: "Lúa mạch vàng", rate: "8 🌾/5ph • max 150" },
+  goat:         { emoji: "🐐", bg: ["#f1f8e9","#c5e1a5"], border: "#558b2f", name: "Dê",           desc: "Sữa dê bổ",     rate: "7 🥛/5ph • max 150" },
+  camel:        { emoji: "🦙", bg: ["#fff8e1","#ffe082"], border: "#f9a825", name: "Lạc đà",       desc: "Lông sa mạc",   rate: "7 🪶/5ph • max 150" },
+  buffalo:      { emoji: "🐃", bg: ["#e8eaf6","#9fa8da"], border: "#3949ab", name: "Trâu",         desc: "Sữa trâu đậm",  rate: "9 🥛/5ph • max 150" },
+  golden_sheep: { emoji: "🐑", bg: ["#fff8e1","#ffe082"], border: "#f57f17", name: "Cừu vàng",     desc: "✨ Len vàng hiếm", rate: "15 🧶/5ph • max 100" },
+  peacock:      { emoji: "🦚", bg: ["#e0f2f1","#80cbc4"], border: "#00695c", name: "Công",         desc: "🪶 Lông vũ đẹp",  rate: "12 🪶/5ph • max 100" },
+  unicorn:      { emoji: "🦄", bg: ["#f3e5f5","#ce93d8"], border: "#7b1fa2", name: "Kỳ lân",       desc: "✨ Gem huyền bí",  rate: "0.1 💎/lần thu" },
+  phoenix:      { emoji: "🦅", bg: ["#fbe9e7","#ff8a65"], border: "#d84315", name: "Phượng hoàng", desc: "🔥 Lửa thần",      rate: "0.16 💎/lần thu" },
+  dragon:       { emoji: "🐉", bg: ["#e8eaf6","#9fa8da"], border: "#1a237e", name: "Rồng",         desc: "💎 Ngọc rồng",     rate: "0.06 💎/lần thu" },
 };
 
 const TIER_CONFIG = {
@@ -381,6 +381,8 @@ function FarmScreen({ farm, showToast, onRefresh }) {
               <div style={S.animalEmoji}>{cfg.emoji}</div>
               <div style={S.animalName}>{cfg.name}</div>
               <div style={S.animalLv}>Lv.{a.level}</div>
+              <div style={{ fontSize: 9, color: "#666", marginBottom: 2 }}>{cfg.desc}</div>
+              <div style={{ fontSize: 9, color: "#43a047", fontWeight: 600, marginBottom: 4 }}>⚡ {cfg.rate}</div>
               {a.isRetired
   ? <div style={{ background:"#f5f5f5",color:"#999",borderRadius:10,padding:"2px 8px",fontSize:10,fontWeight:700,marginBottom:6,display:"inline-block" }}>💤 Nghỉ hưu</div>
   : a.isHungry
