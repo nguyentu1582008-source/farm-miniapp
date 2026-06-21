@@ -329,7 +329,15 @@ function FarmScreen({ farm, showToast, onRefresh }) {
     } catch (e) { showToast(e.message, "error"); }
     setBusy(null);
   };
-
+  const doSellAnimal = async (id) => {
+  setBusy(id + "_s");
+  try {
+    const r = await apiFetch("/farm/sell-animal", { method: "POST", body: JSON.stringify({ userAnimalId: id }) });
+    showToast(`Bán thú! +${Number(r.refund).toLocaleString()} xu 💰`);
+    onRefresh();
+  } catch (e) { showToast(e.message, "error"); }
+  setBusy(null);
+};
   const hungryCount = animals.filter(a => a.isHungry).length;
   const readyCount = animals.filter(a => !a.isHungry && (a.pendingProduction || 0) > 0).length;
   const allReadyIds = animals.filter(a => !a.isHungry && (a.pendingProduction || 0) > 0).map(a => a.id);
@@ -383,7 +391,7 @@ function FarmScreen({ farm, showToast, onRefresh }) {
   <div style={{ width:`${Math.min(100,(Number(a.totalProduced||0)/Number(a.maxProduction||200))*100)}%`,background:a.isRetired?"#bdbdbd":"#43a047",height:"100%",borderRadius:10 }} />
 </div>
 {a.isRetired
-  ? <div style={{ fontSize:10,color:"#aaa",textAlign:"center" }}>Mua thú mới</div>
+  ? <button style={{ ...S.btnOrange, fontSize: 10, padding: "4px 0" }} onClick={() => doSellAnimal(a.id)} disabled={!!busy}>{busy===a.id+"_s"?"...":"💰 Bán thú"}</button>
   : a.isHungry
     ? <button style={S.btnOrange} onClick={() => doFeed(a.id)} disabled={!!busy}>{busy===a.id+"_f"?"...":"🌾 Cho ăn"}</button>
     : pending > 0
